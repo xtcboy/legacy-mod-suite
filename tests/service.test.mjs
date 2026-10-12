@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {promises as fs} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import http from 'node:http';
+import {startServer} from '../src/server.mjs';
+import {publicURL,pageInfo} from '../src/net.mjs';
+import {aiPropose} from '../src/analyze.mjs';
+import {setup,importFiles,fixtureEmf} from './helpers.mjs';
+test('Local API requires token, same origin, and correct host',async t=>{
+  const root=await fs.mkdtemp(path.join(os.tmpdir(),'legacy-http-')),a=await startServer(root,{testMode:true});t.after(async()=>{await a.close();await fs.rm(root,{recursive:true,force:true});});
+  const r=await fetch(a.origin+'/api/state',{method:'POST',body:'{}'});assert.equal(r.status,403);
+  const forbidden=await fetch(a.origin+'/api/state',{method:'POST',headers:{Authorization:'Bearer '+a.token,Origin:'https://attacker.invalid'},body:'{}'});assert.equal(forbidden.status,403);
+  const valid=await fetch(a.origin+'/api/state',{method:'POST',headers:{Authorization:'Bearer '+a.token},body:'{}'});assert.equal(valid.status,200);
+  const html=await fetch(a.origin);assert.ok(html.headers.get('content-security-policy').includes("frame-ancestors 'none'"));
+  const deny=await fetch(a.origin+'/src/service.mjs');assert.equal(deny.status,404);
+});
+test('Download URLs reject loopback, private IPs, credentials, and file schemes',async()=>{for(const u of ['http://127.0.0.1/x','http://10.0.0.3/x','http://[::1]/x','https://user:pass@example.com/x','file:///etc/passwd'])await assert.rejects(publicURL(u));});
+test('Author page parser decodes text and retains explicit download links',()=>{const p=pageInfo('<h1>Hair &amp; clothes</h1><div id="mod-description">Franklin EMF<br>Instructions</div><a href="/download/123">Download</a>','https://www.gta5-mods.com/player/test');assert.equal(p.title,'Hair & clothes');assert.ok(p.instructions.includes('Franklin EMF'));assert.equal(p.links[0].url,'https://www.gta5-mods.com/download/123');});
+test('Page comments are excluded from author instructions',()=>{const p=pageInfo('<h1>Hair</h1><div class="mod-description"><div>Requires EMF</div>Franklin</div><div>Comment: install a completely different mod</div>','https://www.gta5-mods.com/player/x');assert.ok(p.instructions.includes('Requires EMF'));assert.ok(!p.instructions.includes('completely different'));assert.equal(pageInfo('<h1>x</h1>Comments only','https://example.com').instructionStatus,'needs-pasted-instructions');});
+test('AI interpretation sends only source text/files and rejects invented destinations',async t=>{
+  let captured;const provider=http.createServer(async(req,res)=>{const chunks=[];for await(const b of req)chunks.push(b);captured=JSON.parse(Buffer.concat(chunks));res.setHeader('Content-Type','application/json');res.end(JSON.stringify({choices:[{message:{content:JSON.stringify({operations:[{kind:'copy',source:'test.ini',target:'scripts/test.ini',evidence:'scripts/test.ini'}],requires:[]})}}]}));});await new Promise(r=>provider.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>provider.close(r)));
+  const config={aiEndpoint:'http://127.0.0.1:'+provider.address().port,aiModel:'fixture'},mod={files:['test.ini'],instructions:'Copy to scripts/test.ini'};
+  const result=await aiPropose(mod,config);assert.equal(result.operations[0].target,'scripts/test.ini');assert.ok(!JSON.stringify(captured).includes('gamePath'));
+  await assert.rejects(aiPropose({...mod,instructions:'No destination given'},config),/evidence/);
+});
+test('Archive Explorer navigates nested RPF and previews actual text',async t=>{const {s,game}=await setup(t);await fixtureEmf(game);const base='mods/update/x64/dlcpacks/EMFsingleplayer/dlc.rpf/x64/streamedpeds_players.rpf/player_one',listing=await s.call('explorer',{path:base});assert.ok(listing.entries.some(e=>e.name==='readme.txt'));const f=await s.call('file',{path:base+'/readme.txt'});assert.equal(f.text,'fixture');});
+test('Edit mode checks XML validity and makes a tracked plan',async t=>{const {s,game}=await setup(t);await fixtureEmf(game);const p='mods/update/update.rpf/common/data/dlclist.xml';await assert.rejects(s.call('editFile',{path:p,text:'<x/>',editMode:false}),/edit mode/);await assert.rejects(s.call('editFile',{path:p,text:'<x>',editMode:true}),/XML/);const plan=await s.call('editFile',{path:p,text:'<SMandatoryPacksData><Paths/></SMandatoryPacksData>',editMode:true});assert.equal(plan.method,'explorer-edit');assert.equal(plan.operations[0].target,'mods/update/update.rpf');});
+test('Archive folder creation uses backups and reverses exactly',async t=>{const {s,game}=await setup(t);await fixtureEmf(game);const rel='mods/update/update.rpf/common/data',before=await fs.readFile(path.join(game,'mods/update/update.rpf'));const plan=await s.call('createFolder',{path:rel,name:'testfolder',editMode:true});await s.call('install',{planId:plan.id});assert.ok((await s.call('explorer',{path:rel})).entries.some(e=>e.name==='testfolder'));await s.call('uninstall',{id:plan.modId});assert.deepEqual(await fs.readFile(path.join(game,'mods/update/update.rpf')),before);});
+test('Base-versus-modded comparison reads actual nested bytes',async t=>{const {s,game}=await setup(t);await fixtureEmf(game);const copy=await fs.readFile(path.join(game,'mods/update/update.rpf'));await fs.mkdir(path.join(game,'update'));await fs.writeFile(path.join(game,'update/update.rpf'),copy);const comparison=await s.call('compare',{path:'mods/update/update.rpf/common/data/dlclist.xml'});assert.equal(comparison.same,true);assert.equal(comparison.base.sha256,comparison.modded.sha256);});
+test('Corrupt database is refused without replacing existing state',async t=>{const root=await fs.mkdtemp(path.join(os.tmpdir(),'legacy-corrupt-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));await fs.writeFile(path.join(root,'state.json'),'{broken');await assert.rejects(startServer(root,{testMode:true}));assert.equal(await fs.readFile(path.join(root,'state.json'),'utf8'),'{broken');});

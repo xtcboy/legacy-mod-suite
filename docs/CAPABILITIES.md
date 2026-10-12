@@ -1,0 +1,25 @@
+# Verified capabilities and limits
+
+| Area | Implemented and checked | Remaining limit |
+| --- | --- | --- |
+| Desktop UI | OLED black Electron interface, 12 pages sharing one service; UI navigation and real-file previews tested in headless Chromium | Native Windows and M4 execution not performed |
+| Imports | ZIP/OIV with CRC checks, RAR through WASM, 7z through guarded in-memory extraction, folders | Password-protected/multipart archives unsupported; downloaded/extracted archive limit 256 MiB |
+| Instruction analysis | Author-description section, archive readmes, GTArage PE dependency scanner, explicit destinations, reviewed mappings | Arbitrary installation prose, complex optional variants, and unsupported category conversion need review |
+| Downloads | Public links, redirects, accessible GTA5-Mods download pages, official GitHub release resolution | Captchas, login, HTTP 403, ambiguous assets, and host restrictions cause an archive request; no bypass |
+| Dependencies | Required/recommended/optional classification, recursive topological order, version constraints, cycles, shared ownership, failure isolation, resume on supplied dependency | Runtime compatibility with every GTA build is not established by file hashes; curated catalog is finite |
+| EMF | Exact supplied Short Dreads recipe, explicit Franklin/Michael/Trevor instructions, loader chain, actual destination and DLC registration checks, occupied-slot conflict detection | No automatic clothing conversion, rigging validation, YLD adaptation, slot renaming, or invented paths |
+| Non-OIV mods | Explicit `scripts/`, `plugins/`, and `mods/` layouts; ASI loader requirements; explicit RPF paths; player EMF assets; DLC copy + registration | Vehicle replacement, maps, weapons, and audio only when a supported explicit path/layout is available; category-specific inference is unfinished |
+| Archive Explorer | Filesystem browsing, nested OPEN RPF navigation, breadcrumbs, current-folder filtering, extraction, properties, text preview, XML validation, staged import/edit/folder creation, comparison with originals, drag and drop | Not a full expanded navigation tree or global archive search; texture/3D model previews unavailable |
+| Native RPF | OPEN/NONE RPF7 parse/rebuild, binary files, preserved resource bytes, folders, nested replacements/deletions | 256 MiB outer archive cap; encrypted TOCs, encrypted entries, script resources, and resources at or above 0xFFFFFF bytes unsupported |
+| Optional RPF bridge | Independent reflection adapter, inspected CodeWalker public methods, compile-checked DLL, stdin protocol avoiding command-length limits | Needs your own compatible Core assembly/dependencies, .NET 8, real executable for keys, and Windows runtime validation |
+| OIV install | OIV 2.2/Five metadata validation, root RPF creation, add/delete, nested existing RPFs, dlclist Paths/Item addition, previews and rollback | Older formats, arbitrary XPath/text edits, PSO operations, archive defragmentation, and nested archive creation are rejected before changes |
+| OIV generation | Valid ZIP content, assembly metadata/colors/GUID, nested add/delete commands, real payloads, round-trip parser check | Does not embed/install dependencies; advanced native operations use a native bundle instead |
+| Library | Names, source URLs, versions, files, hashes, enable/disable, verification, history, search | No auto-update installation, bulk adoption of manual mods, or configurable winner/load-order UI |
+| Profiles | Selected mod sets, dependency queue application, vanilla, attempted restoration after switch failure | Newer shared-archive changes must be unwound first; no profile auto-launch |
+| Backups | Staged installs, verified originals, atomic replacement, persisted WAL, failure rollback, interrupted recovery, external-change protection | Full physical archives are copied; recovery cannot safely overwrite unrelated external edits; no save-game snapshots or backup pruning |
+| AI | Compatible endpoint, file/readme-only payload, structured proposal, independent evidence/path/operation validation, explicit acceptance | External provider execution untested; complex arbitrary mod installation remains unfinished |
+| Mac preparation | Native arm64 app built; same local service can run through Node/browser; imports, plans, dependency preparation, OIV and Windows bundle export | Native Mac execution untested; bundles currently carry one mod and its requirements, with dependencies resolved/imported on Windows |
+
+“Verified” refers to the tests described in TEST-REPORT.md. Fixture installation and hash verification are not proof of successful rendering or loading inside GTA V.
+
+The next blocking validation is to execute the Windows app with a compatible CodeWalker.Core assembly against a real encrypted Legacy mods copy, then install and launch the supplied Short Dreads mod with the real EMF framework. Neither a real GTA executable nor the actual EMF framework archive was supplied in this session.

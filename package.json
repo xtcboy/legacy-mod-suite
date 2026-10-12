@@ -1,0 +1,61 @@
+{
+  "name": "legacy-mod-suite",
+  "productName": "Legacy Mod Suite",
+  "version": "0.1.0",
+  "description": "GTA V Legacy mod preparation and transactional installation",
+  "type": "module",
+  "main": "src/desktop.mjs",
+  "license": "MIT",
+  "author": "Noah Delgado",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/launch.mjs",
+    "desktop": "electron .",
+    "test": "node --test tests/*.test.mjs",
+    "dist:win": "electron-builder --win dir --x64",
+    "dist:mac": "electron-builder --mac zip --arm64",
+    "dist:setup": "electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "7zip-bin": "5.2.0",
+    "node-unrar-js": "2.0.2"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.xnxhlk.legacymods",
+    "productName": "Legacy Mod Suite",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**",
+      "ui/**",
+      "vendor/**",
+      "package.json",
+      "LICENSE",
+      "docs/**",
+      "third-party-licenses/**"
+    ],
+    "asarUnpack": [
+      "node_modules/7zip-bin/**"
+    ],
+    "win": {
+      "target": "dir",
+      "executableName": "LegacyModSuite",
+      "icon": "build/icon.ico"
+    },
+    "mac": {
+      "target": "zip",
+      "category": "public.app-category.utilities"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

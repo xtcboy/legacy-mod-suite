@@ -1,0 +1,29 @@
+{
+  "windows": {
+    "machine": "x64",
+    "authenticode_signature_size": 0,
+    "runtime_tested": false
+  },
+  "mac": {
+    "cpu": "arm64",
+    "runtime_tested": false
+  },
+  "tests": {
+    "pass": 67,
+    "fail": 0,
+    "skipped": 0
+  },
+  "ui": {
+    "uiPages": 12,
+    "realRarImport": true,
+    "emfPreview": true,
+    "nestedExplorer": true,
+    "textPreview": true,
+    "pageErrors": [],
+    "failedRequests": []
+  },
+  "bridge": {
+    "compile_checked": true,
+    "encrypted_runtime_checked": false
+  }
+}

@@ -1,0 +1,16 @@
+node_modules
+/release/
+/dist/
+/qa-screenshots/
+/tests/fixtures/
+/samples/
+/bridge/bin/
+/bridge/obj/
+/bridge/prebuilt/
+*.log
+*.core
+*.dmp
+.env
+.env.*
+.DS_Store
+Thumbs.db
