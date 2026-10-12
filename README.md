@@ -1,4 +1,4 @@
-# Legacy Mod Suite 0.1.0
+# Legacy Mod Suite 0.1.1
 
 A Windows desktop application for GTA V Legacy mod installation, with an Apple Silicon preparation interface. It imports ZIP/RAR/7z/OIV archives, builds validated installation plans, orders required dependencies, and backs up every changed physical file or archive. The same database tracks the library, profiles, queue, editor changes, and transaction history.
 
@@ -112,6 +112,10 @@ dotnet publish bridge/LegacyArchiveBridge.csproj -c Release -r win-x64 --self-co
 ```
 
 The source's lockfile pins the Node dependencies. `npm run dist:win` creates `release/win-unpacked/`; zip the whole folder to share a portable build. The test report describes the separate native-package inspection and browser UI checks.
+
+### Windows startup troubleshooting
+
+Version 0.1.1 shows a **Preparing your workspace…** window while it initializes. It also records progress and any startup failure in `%TEMP%\Legacy-Mod-Suite-startup.log`. To read that file in PowerShell, run `Get-Content "$env:TEMP\Legacy-Mod-Suite-startup.log"`.
 
 ## Optional AI
 
