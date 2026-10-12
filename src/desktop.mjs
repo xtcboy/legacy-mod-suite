@@ -8,7 +8,9 @@ async function writeStartupLog(message){try{const file=process.env.LEGACY_SUITE_
 if(!app.requestSingleInstanceLock())app.quit();
 else {
   app.on('second-instance',()=>{window?.show();window?.focus();});
-  try{
+  app.on('window-all-closed',()=>app.quit());
+  let closing=false;app.on('before-quit',event=>{if(server&&!closing){event.preventDefault();closing=true;server.close().finally(()=>app.quit());}});
+  async function startDesktop(){try{
     await writeStartupLog('Main module loaded; waiting for Electron readiness.');
     await app.whenReady();
     await writeStartupLog('Electron ready; creating the startup window.');
@@ -38,7 +40,6 @@ else {
     await window.loadURL(server.origin);
     window.setTitle('Legacy Mod Suite');window.show();window.focus();
     await writeStartupLog('Interface loaded.');
-  }catch(e){const detail=e?.stack||String(e);await writeStartupLog(`Startup failed: ${detail}`);dialog.showErrorBox('Unable to start Legacy Mod Suite',detail);app.quit();}
-  app.on('window-all-closed',()=>app.quit());
-  let closing=false;app.on('before-quit',event=>{if(server&&!closing){event.preventDefault();closing=true;server.close().finally(()=>app.quit());}});
+  }catch(e){const detail=e?.stack||String(e);await writeStartupLog(`Startup failed: ${detail}`);dialog.showErrorBox('Unable to start Legacy Mod Suite',detail);app.quit();}}
+  void startDesktop();
 }
