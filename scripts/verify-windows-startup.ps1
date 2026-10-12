@@ -3,6 +3,10 @@ $exe = Join-Path $PSScriptRoot '..\release\win-unpacked\LegacyModSuite.exe'
 $log = Join-Path $env:TEMP 'Legacy-Mod-Suite-startup.log'
 if (-not (Test-Path $exe)) { throw "Packaged executable not found: $exe" }
 Remove-Item $log -Force -ErrorAction SilentlyContinue
+# Hosted Windows runners can expose a different temp path to PowerShell and
+# child processes. Make Electron inherit the exact path the smoke test watches.
+$env:TMP = $env:TEMP
+$env:TMPDIR = $env:TEMP
 $process = Start-Process -FilePath $exe -WorkingDirectory (Split-Path $exe) -PassThru
 $deadline = (Get-Date).AddSeconds(60)
 $ready = $false
